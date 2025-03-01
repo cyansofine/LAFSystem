@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost and Found System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .form-container, .listings-container {
+            display: none;
+        }
+        
+        .form-container.active, .listings-container.active {
+            display: block;
+        }
+        
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .submit-btn {
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 768px) {
+            .submit-btn {
+                grid-column: span 1;
+            }
+        }
+        
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-container select, .filter-container input {
+            max-width: 200px;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .item-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .item-type {
+            display: inline-block;
+            padding: 3px 10px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .lost {
+            background-color: #e74c3c;
+        }
+        
+        .found {
+            background-color: #2ecc71;
+        }
+        
+        .item-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .item-location, .item-date, .item-contact {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .item-description {
+            margin-top: 10px;
+            font-size: 15px;
+            color: #34495e;
+        }
+        
+        .no-items {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .resolved {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .pending {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lost and Found System</h1>
+            <div class="date" id="current-date"></div>
+        </header>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="report">Report Item</div>
+            <div class="tab" data-tab="browse">Browse Items</div>
+        </div>
+        
+        <div class="form-container active" id="report-form">
+            <h2>Report a Lost or Found Item</h2>
+            <form id="item-form">
+                <div class="form-group">
+                    <label for="item-type">Report Type *</label>
+                    <select id="item-type" required>
+                        <option value="">Select Type</option>
+                        <option value="lost">Lost Item</option>
+                        <option value="found">Found Item</option>
+                    </select>
+                    <div class="error-message" id="item-type-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <select id="category" required>
+                        <option value="">Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="documents">Documents</option>
+                        <option value="keys">Keys</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <div class="error-message" id="category-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="item-name">Item Name *</label>
+                    <input type="text" id="item-name" placeholder="e.g. Blue Wallet" required>
+                    <div class="error-message" id="item-name-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location">Location *</label>
+                    <input type="text" id="location" placeholder="Where lost/found" required>
+                    <div class="error-message" id="location-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date">Date *</label>
+                    <input type="date" id="date" required>
+                    <div class="error-message" id="date-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-name">Your Name *</label>
+                    <input type="text" id="contact-name" required>
+                    <div class="error-message" id="contact-name-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-info">Contact Information *</label>
+                    <input type="text" id="contact-info" placeholder="Email or Phone Number" required>
+                    <div class="error-message" id="contact-info-error"></div>
+                </div>
+                
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="description">Description *</label>
+                    <textarea id="description" placeholder="Provide details about the item..." required></textarea>
+                    <div class="error-message" id="description-error"></div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit Report</button>
+            </form>
+        </div>
+        
+        <div class="listings-container" id="browse-items">
+            <h2>Browse Lost and Found Items</h2>
+            
+            <div class="filter-container">
+                <div class="form-group">
+                    <label for="filter-type">Type</label>
+                    <select id="filter-type">
+                        <option value="all">All Items</option>
+                        <option value="lost">Lost Items</option>
+                        <option value="found">Found Items</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-category">Category</label>
+                    <select id="filter-category">
+                        <option value="all">All Categories</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="documents">Documents</option>
+                        <option value="keys">Keys</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="search">Search</label>
+                    <input type="text" id="search" placeholder="Search items...">
+                </div>
+            </div>
+            
+            <div class="items-grid" id="items-container">
+                <!-- Items will be populated here by JavaScript -->
+                <div class="no-items">No items found. Be the first to report one!</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Notification message</div>
+
+    <script>
+        // Initialize the current date
+        const dateElement = document.getElementById('current-date');
+        const currentDate = new Date();
+        dateElement.textContent = currentDate.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const formContainer = document.getElementById('report-form');
+        const listingsContainer = document.getElementById('browse-items');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show the appropriate container
+                if (tab.dataset.tab === 'report') {
+                    formContainer.classList.add('active');
+                    listingsContainer.classList.remove('active');
+                } else {
+                    formContainer.classList.remove('active');
+                    listingsContainer.classList.add('active');
+                    renderItems(); // Refresh the items when switching to browse tab
+                }
+            });
+        });
+        
+        // Notification system
+        const notification = document.getElementById('notification');
+        
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = 'notification' + (isError ? ' error' : '');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Check local storage functionality
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__storage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+        
+        // Form submission handling with enhanced validation
+        const form = document.getElementById('item-form');
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Clear previous error messages
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.textContent = '';
+            });
+            
+            // Validate form
+            let isValid = true;
+            
+            // Report Type
+            const itemType = document.getElementById('item-type').value;
+            if (!itemType) {
+                document.getElementById('item-type-error').textContent = 'Please select a report type';
+                isValid = false;
+            }
+            
+            // Category
+            const category = document.getElementById('category').value;
+            if (!category) {
+                document.getElementById('category-error').textContent = 'Please select a category';
+                isValid = false;
+            }
+            
+            // Item Name
+            const itemName = document.getElementById('item-name').value.trim();
+            if (!itemName) {
+                document.getElementById('item-name-error').textContent = 'Please enter an item name';
+                isValid = false;
+            }
+            
+            // Location
+            const location = document.getElementById('location').value.trim();
+            if (!location) {
+                document.getElementById('location-error').textContent = 'Please enter a location';
+                isValid = false;
+            }
+            
+            // Date
+            const date = document.getElementById('date').value;
+            if (!date) {
+                document.getElementById('date-error').textContent = 'Please select a date';
+                isValid = false;
+            }
+            
+            // Contact Name
+            const contactName = document.getElementById('contact-name').value.trim();
+            if (!contactName) {
+                document.getElementById('contact-name-error').textContent = 'Please enter your name';
+                isValid = false;
+            }
+            
+            // Contact Info
+            const contactInfo = document.getElementById('contact-info').value.trim();
+            if (!contactInfo) {
+                document.getElementById('contact-info-error').textContent = 'Please enter your contact information';
+                isValid = false;
+            }
+            
+            // Description
+            const description = document.getElementById('description').value.trim();
+            if (!description) {
+                document.getElementById('description-error').textContent = 'Please enter a description';
+                isValid = false;
+            }
+            
+            // If form is not valid, stop here
+            if (!isValid) {
+                showNotification('Please fill in all required fields correctly', true);
+                return;
+            }
+            
+            // Check if local storage is available
+            if (!isLocalStorageAvailable()) {
+                showNotification('Local storage is not available in your browser. Please enable it or try another browser.', true);
+                return;
+            }
+            
+            try {
+                // Create new item object
+                const newItem = {
+                    id: Date.now(), // Use timestamp as unique ID
+                    type: itemType,
+                    category: category,
+                    name: itemName,
+                    location: location,
+                    date: date,
+                    contactName: contactName,
+                    contactInfo: contactInfo,
+                    description: description,
+                    status: 'pending',
+                    reportDate: new Date().toISOString()
+                };
+                
+                // Get existing items from local storage or initialize empty array
+                let items = [];
+                try {
+                    items = JSON.parse(localStorage.getItem('lostFoundItems')) || [];
+                } catch (err) {
+                    // If there's an error parsing, start with empty array
+                    items = [];
+                    console.error('Error parsing stored items:', err);
+                }
+                
+                // Add new item to array
+                items.push(newItem);
+                
+                // Save back to local storage
+                localStorage.setItem('lostFoundItems', JSON.stringify(items));
+                
+                // Reset the form
+                form.reset();
+                
+                // Show success message
+                showNotification(`Your ${itemType} item report has been submitted successfully!`);
+                
+                // Switch to browse tab to show the new item
+                tabs[1].click();
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                showNotification('An error occurred while submitting your report. Please try again.', true);
+            }
+        });
+        
+        // Filter and search functionality
+        const filterType = document.getElementById('filter-type');
+        const filterCategory = document.getElementById('filter-category');
+        const searchInput = document.getElementById('search');
+        
+        filterType.addEventListener('change', renderItems);
+        filterCategory.addEventListener('change', renderItems);
+        searchInput.addEventListener('input', renderItems);
+        
+        // Render items with filtering
+        function renderItems() {
+            const itemsContainer = document.getElementById('items-container');
+            
+            // Try to get items from local storage
+            let items = [];
+            try {
+                items = JSON.parse(localStorage.getItem('lostFoundItems')) || [];
+            } catch (err) {
+                console.error('Error loading items from local storage:', err);
+                showNotification('Error loading items. Local storage may be corrupted.', true);
+                items = [];
+            }
+            
+            // Get filter values
+            const typeFilter = filterType.value;
+            const categoryFilter = filterCategory.value;
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            // Apply filters
+            const filteredItems = items.filter(item => {
+                // Type filter
+                if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+                
+                // Category filter
+                if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
+                
+                // Search term
+                if (
+                    searchTerm && 
+                    !item.name.toLowerCase().includes(searchTerm) && 
+                    !item.description.toLowerCase().includes(searchTerm) && 
+                    !item.location.toLowerCase().includes(searchTerm)
+                ) return false;
+                
+                return true;
+            });
+            
+            // Sort items by date (newest first)
+            filteredItems.sort((a, b) => new Date(b.reportDate) - new Date(a.reportDate));
+            
+            // Clear container
+            itemsContainer.innerHTML = '';
+            
+            // If no items, show message
+            if (filteredItems.length === 0) {
+                itemsContainer.innerHTML = '<div class="no-items">No items found matching your filters.</div>';
+                return;
+            }
+            
+            // Render filtered items
+            filteredItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'item-card';
+                itemElement.innerHTML = `
+                    <div class="item-type ${item.type}">${item.type === 'lost' ? 'Lost' : 'Found'}</div>
+                    <h3 class="item-title">${item.name}</h3>
+                    <div class="item-location">📍 ${item.location}</div>
+                    <div class="item-date">📅 ${formatDate(item.date)}</div>
+                    <div class="item-category">📂 ${capitalizeFirstLetter(item.category)}</div>
+                    <div class="item-contact">👤 ${item.contactName} - ${item.contactInfo}</div>
+                    <p class="item-description">${item.description}</p>
+                `;
+                
+                itemsContainer.appendChild(itemElement);
+            });
+        }
+        
+        // Format date helper function
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+        
+        // Capitalize first letter helper function
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        // Initial render
+        renderItems();
+
+        // Initialize form with today's date
+        document.getElementById('date').valueAsDate = new Date();
+    </script>
+</body>
+</html>
